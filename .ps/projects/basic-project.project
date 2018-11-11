@@ -1,0 +1,11 @@
+{
+    "ps_version":  "3.0",
+    "name":  "basic-project",
+    "file":  ".\\Template\\basic-project.psm1",
+    "group":  "basic-project",
+    "dev":  "master",
+    "test":  "test",
+    "settings":  {
+                     "repo":  "C:/Users/jonat/source/repos/Powershell"
+                 }
+}

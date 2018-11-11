@@ -1,0 +1,11 @@
+{
+    "ps_version":  "3.0",
+    "name":  "rogue",
+    "file":  ".\\rogue.ps1",
+    "group":  "rogue",
+    "dev":  "master",
+    "test":  "test",
+    "settings":  {
+                     "repo":  "C:/Users/jonat/source/repos/PSRogueLike"
+                 }
+}
