@@ -22,13 +22,19 @@ if ($host.Name -eq "Visual Studio Code Host") {
 
     (Get-Host).ui.rawui.WindowTitle = "PS RogueLike"
     
-    if ($args.Count -gt 0) {
-        if (Test-Path "$($args[0]).ps1") {
-            . ".\$($args[0]).ps1"
+    if ($args.Count -gt 1) {
+        if (Test-Path "$($args[1]).ps1") {
+            . ".\$($args[1]).ps1"
         }
+    }
+    if ($args.Count -gt 0) {
+        $game.playerName = $args[0]
+    } else {
+        $game.playerName = Read-Host "What is your name?"
     }
 }
 
 Initialize-Console
+
 GameSetup
 

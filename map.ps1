@@ -116,7 +116,8 @@ $wallhash = @{
     " # ###   " = "v"
 }
 
-function makeLines([string[]]$lines) {
+function makeLines([string[]]$lines, $wallChar) {
+    $walls = "+-&$wallChar"
     $cols = $lines[0].length
     $length = $cols + 2
     $rows = $lines.Count
@@ -131,19 +132,21 @@ function makeLines([string[]]$lines) {
             $l2 = " "*$length
         }
         for ($j = 0; $j -lt $cols; $j++) {
-            $wall = [string]::new( ("$($l0.Substring($j,3))$($l1.Substring($j,3))$($l2.Substring($j,3))".tochararray() | % { if($_ -eq "#"){"#"}else{" "}}) )
-            $d = $wallhash[$wall]
-            if ($d) {
-                $chars[$j] = $d
-            }
-            if ($l1[$j+1] -eq "#") {
-                if (!$d) {
-
-                    write-host $l0
-                    write-host $l1
-                    write-host $l2
-                    write-host "'$wall'"
-                    Read-Host ">"
+            if ($chars[$j] -eq $wallChar) {
+                $wall = [string]::new( ("$($l0.Substring($j,3))$($l1.Substring($j,3))$($l2.Substring($j,3))".tochararray() | % { if($walls.Contains($_)){"#"}else{" "}}) )
+                $d = $wallhash[$wall]
+                if ($d) {
+                    $chars[$j] = $d
+                }
+                if ($l1[$j+1] -eq $wallChar) {
+                    if (!$d) {
+                        
+                        write-host $l0
+                        write-host $l1
+                        write-host $l2
+                        write-host "'$wall'"
+                        Read-Host ">"
+                    }
                 }
             }
         }
@@ -154,7 +157,7 @@ function makeLines([string[]]$lines) {
 function CreateMapFromLevel($levelgen) {
     $lines = $levelgen.level.split([Environment]::NewLine, [StringSplitOptions]::RemoveEmptyEntries)
     if ($levelgen.DrawLines) {
-        makeLines $lines
+        makeLines $lines $levelgen.DrawLines
     }
     $cols = $lines[0].length
     $rows = $lines.Count
@@ -197,7 +200,7 @@ function CreateEntity($levelgen, [string]$key) {
             $code = $dec.$key
             if ($code) {
                 $glyph = [char]$code
-                $key = "#" # wall
+                $key = $levelgen.DrawLines # wall
             }
         }
     }
@@ -230,11 +233,15 @@ function PlaceEntityXY($entity, $x, $y) {
 function CreateEntityChar($mapgen,$key, $char) {
     if (!$char) { $char = $key}
     $colors = $mapgen.litColors
+    $fg =  $colors[$key]
+    if (!$fg) {
+        $fg = "Magenta"
+    }
     $bg = $colors[" "]
     return @{
         gen = $mapgen[$key]
         Character = $char
-        Foreground = $colors[$key]
+        Foreground = $fg
         Background = $bg
     }
 

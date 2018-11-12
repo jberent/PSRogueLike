@@ -33,7 +33,7 @@ function CombatResults($attacker, $defender) {
                 }
             }
             CombatLog "$(AttackName $attacker) killed $(AttackName $defender) [$tohit,$hit,$hp,$damage]" "KILL" $attacker $defender
-            KillEntity $defender
+            KillEntity $defender $attacker
         }
 
     }
@@ -60,6 +60,7 @@ function RollDice($dice) {
         for($r=0; $r -lt $rolls; $r++) {
             $result += ((Get-Random $d) + 1)
         }
+        #read-host "$dice $rolls x $d = $($result + $bonus)"
         return $result + $bonus
     }
 }
@@ -69,7 +70,7 @@ function GetCombatHitPoints($entity) {
             $entity.HP = RollDice $entity.gen.HP
         }
         if (!$entity.HP) {
-            $entity.HP = RollDice "$(GetCombatAttackLevel $entity)d8"
+            $entity.HP = RollDice "$(GetEntityLevel $entity)d8"
         }
     }
     if (!$entity.MAXHP) {
@@ -109,7 +110,7 @@ function GetCombatToHit($attacker, $defender) {
 }
 
 function GetCombatAttackMatrix($attacker) {
-    $level = GetCombatAttackLevel $attacker
+    $level = GetEntityLevel $attacker
     # TODO: choose matrix by level
     @{
         "-10" = 25
@@ -136,19 +137,6 @@ function GetCombatAttackMatrix($attacker) {
     }
 }
 
-function GetCombatAttackLevel($attacker) {
-    if ($attacker.Level) {
-        $attacker.Level
-    } else {
-        1
-    }
-
-}
-
 function GetCombatArmorClass($defender) {
-    if ($defender.ArmorClass) {
-        $defender.ArmorClass
-    } else {
-        10 # no armor
-    }
+    GetEntityValue $defender ArmorClass 10
 }

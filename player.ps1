@@ -18,7 +18,7 @@ function DrawPlayerStats {
 
 function DrawPlayerHealthStats {
     $rogue = $game.rogue
-    $status = "Level:1 x:{0,-4} y:{1,-4} `${2,-5} {3,3}({4,3}) {5,2}/{6,-5} " -f $rogue.x, $rogue.y, $rogue.Gold, $rogue.HP, $rogue.MAXHP, $rogue.Level, $rogue.XP
+    $status = "Level:1 x:{0,-4} y:{1,-4} `${2,-5} {3,3}({4,3}) AC:{7,-2} {5,2}/{6,-5} " -f $rogue.x, $rogue.y, $rogue.Gold, $rogue.HP, $rogue.MAXHP, $rogue.Level, $rogue.XP, $rogue.ArmorClass
     Status $status # "x:$($rogue.x) y:$($rogue.y) `$$($rogue.Gold) $($rogue.HP)%"
 }
 
@@ -78,6 +78,7 @@ function DrawOrbitEntry($buffer, $orbit, $key, $row) {
         if ($entity.IsAlive) {
             $desc = $desc.padright($width)
             $hp = GetCombatHitPoints $entity
+            # Read-host "$width $hp $($entity.MAXHP)"
             [int]$bar = ($width * $hp)/($entity.MAXHP)
             if ($bar -gt 0) {
                 UpdateCells $buffer 2 $row ($desc.substring(0,$bar)) $entity.Foreground DarkGray
@@ -101,5 +102,62 @@ function DrawOrbit {
     DrawOrbitEntry $buffer $orbit "A" 2
     DrawOrbitEntry $buffer $orbit "D" 3
     UpdateWindow "InventoryWindow" $buffer
+}
+
+function ShowTombstone([string]$playerName, [string]$attackerName) {
+    DrawGame
+    if (!$playerName) {$playerName = "Rogue"}
+    if (!$attackerName) {$attackerName = "Misadventure"}
+    # 6,6 center 19
+    $lines = $rip.split([Environment]::NewLine, [StringSplitOptions]::RemoveEmptyEntries)
+    $cols = $lines[0].length
+    $rows = $lines.Count
+    [int]$left = 19 - ($playerName.Length / 2)
+    $line = $lines[6]
+    $lines[6] = $line.substring(0,$left) + $playerName + $line.substring($left+$playerName.Length, $cols - ($left+$playerName.Length))
+    [int]$left = 19 - ($attackerName.Length / 2)
+    $line = $lines[9]
+    $lines[9] = $line.substring(0,$left) + $attackerName + $line.substring($left+$attackerName.Length, $cols - ($left+$attackerName.Length))
+    $buffer = $Host.ui.rawui.NewBufferCellArray($lines, "White", "Black")
+    $win = GetWindow "MapWindow"
+    $rect = RectFromWindow $win
+    $y = (($rect.bottom - $rect.Top)-$rows)
+    $dest = PointFromWindow $window $x $y
+    [char]$mask = "."
+    # [char]$sp = " "
+    $backRect = RectLTRB $dest.x $dest.y ($dest.x+$cols-1) ($dest.y+$rows-1)
+    $background = GetBufferContents $backRect
+    for ($i = 0; $i -lt $rows; $i++) {
+        for ($j = 0; $j -lt $cols; $j++) {
+            if ($buffer[$i,$j].Character -eq $mask) {
+                $buffer[$i,$j] = $background[$i,$j]
+            # } elseif ($buffer[$i,$j].Character -eq $sp) {
+            #     $buffer[$i,$j].ForegroundColor = "Black"
+            #     $buffer[$i,$j].BackgroundColor = "White"
+            }
+        }
+    }
+
+    UpdateWindow "MapWindow" $buffer $dest.x $dest.y
+    $host.ui.RawUI.FlushInputBuffer()
+    for([System.Management.Automation.Host.PSHostRawUserInterface]$ui = $Host.UI.RawUI;;) {
+        $Key = $ui.ReadKey(6)
+        switch($RLKey[$Key.VirtualKeyCode]) {
+            Y   {$game.Quit = $true; $game.Restart = $true; return}
+            Esc {$game.Quit = $true; return}
+        }
+    }
+    
+}
+function unsetMask($buffer, $rect, [char]$mask) {
+    $background = GetBufferContents $rect
+    for ($i = 0; $i -lt $rows; $i++) {
+        for ($j = 0; $j -lt $cols; $j++) {
+            if ($buffer[$i,$j].Character -eq $mask) {
+                $buffer[$i,$j] = $background[$i,$j]
+            }
+        }
+    }
+
 }
 

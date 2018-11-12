@@ -5,10 +5,11 @@ $RLKey = @{
     39 = "Right"
     38 = "Up"
     40 = "Down"
-    87 = "W"
     65 = "A"
-    83 = "S"
     68 = "D"
+    83 = "S"
+    87 = "W"
+    89 = "Y"
 }
 
 function CommandLeft($state) { CommandMovePlayer $state  -1 0 }

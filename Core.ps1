@@ -22,10 +22,16 @@ function GetWindow($windowName) {
     $game.$windowName
 }
 
-function UpdateWindow($windowName, $buffer) {
+function UpdateWindow($windowName, $buffer, $x, $y) {
     $window = GetWindow $windowName
-    SetBufferContents (OriginFromWindow $window) $buffer
+    if (!$x -and !$y) {
+        $dest = (OriginFromWindow $window)
+    } else {
+        $dest = (PointFromWindow $window $x $y)
+    }
+    SetBufferContents $dest $buffer
 }
+
 
 function ScrollWindow($window, [System.Management.Automation.Host.Coordinates]$direction, $text, $fill) {
     if (!$fill) {
@@ -66,9 +72,9 @@ function CreateWindows {
     ##########################
     # Status                 #
     ##########################
-    # Log                    #
-    #                        #
-    #                        #
+    # Log          # Debug   #
+    #              #         #
+    #              #         #
     ##########################
     $right = $game.viewport.width-1
     $bottom = $game.viewport.height-1
@@ -124,13 +130,13 @@ function CombatLog($msg, $cat, $attacker, $defender) {
         switch ($cat) {
             HIT { Log $msg BAD }
             KILL { Log $msg FATAL }
-            Default {}
+            Default {Log $msg}
         }
     } elseif ( $attacker.gen.Name -eq "rogue") {
         switch ($cat) {
             HIT { Log $msg GOOD }
             KILL { Log $msg GOOD }
-            Default {}
+            Default {Log $msg}
         }
     } else {
         Log $msg

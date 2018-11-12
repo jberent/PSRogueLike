@@ -2,7 +2,8 @@ $mapGen = @{
     litColors = @{
         " " = "Black"
         "." = "DarkGray"
-        "#" = "Gray"
+        "#" = "DarkGray"
+        "_" = "Gray"
         "@" = "Green"
         "K" = "Yellow"
         '$' = "Yellow"
@@ -13,7 +14,8 @@ $mapGen = @{
     unlitColors = @{
         " " = "Black"
         "." = "DarkGray"
-        "#" = "GrayWhite"
+        "#" = "DarkGray"
+        "_" = "DarkGray"
         "@" = "Green"
         "K" = "DarkYellow"
         '$' = "DarkYellow"
@@ -39,11 +41,15 @@ $mapGen = @{
         Name = "floor"
         IsEmpty = $true # don't interact
     }
+    "#" = @{
+        Name = "passage"
+        IsEmpty = $true # don't interact
+    }
     " " = @{
-        Name = "void"
+        Name = "void" # rock?
         IsWall = $true # move blocker, light blocker
     }
-    "#" = @{
+    "_" = @{
         Name = "wall"
         IsWall = $true # move blocker, light blocker
         lit2 = 64 # use litcolors when d <= lit2
@@ -63,6 +69,14 @@ $mapGen = @{
         IsClosed = $false
         State = "open"
         ActivateAction = {$target.character = "-"; $target.gen = $mapgen["-"] }
+    }
+    "D" = @{
+        Name = "dragon"
+        IsMonster = $true # move blocker
+        DamageDice = "3d6+2" # ?
+        Level = 10 # hpDice = Level * d8
+        #HP = 50
+        XP = 2500
     }
     "K" = @{
         Name = "kobold"
@@ -84,6 +98,54 @@ $mapGen = @{
         ActivateAction = {$game.rogue.gold += $target.gen.gold; $target.IsDeleted = $true; Log "You found $($target.gen.gold) gold pieces!" }
         #BumpAction = {& $target.gen.ActivateAction $target}
     }
+    ')' = @{
+        Name = "weapon"
+        IsWeapon = $true
+    }
+    ']' = @{
+        Name = "armor"
+        IsArmor = $true
+    }
+    '!' = @{
+        Name = "flask"
+        IsPotion = $true
+    }
+    '?' = @{
+        Name = "paper"
+        IsScroll = $true
+    }
+    '^' = @{
+        Name = "trap"   # >    {     $     }    ~   ` 
+        IsTrap = $true  # door arrow sleep bear tel dart
+    }
+    '%' = @{
+        Name = "armor"
+        IsArmor = $true
+    }
+    ',' = @{
+        Name = "jewelry"
+        IsAmulet = $true
+    }
+    '*' = @{
+        Name = "magic"
+        IsMagic = $true
+    }
+    ':' = @{
+        Name = "food"
+        IsFood = $true
+    }
+    '=' = @{
+        Name = "ring"
+        IsRing = $true
+    }
+    '/' = @{
+        Name = "stick"
+        IsWand = $true
+    }
+    '&' = @{
+        Name = "secret door"
+        IsSecretDoor = $true
+    }
     '>' = @{
         Name = "stairs"
         Direction = "down"
@@ -95,21 +157,24 @@ $mapGen = @{
         ArmorClass = 7
         LOS2 = 256 # dist^2 ??
         FOV2 = 64  # lit
+        KilledAction = {ShowTombStone $game.playerName (EntityName $args[1])}
     }
 } 
 
 $rip = @"
-.............. ________  ...................
-............. /        \\ ..................
-............ /   REST   \\ .................
-........... /     IN     \\ ................
-.......... /    PEACE     \\ ...............
-......... /                \\ ..............
-........ |                  | ..............
-........ |                  | ..............
-........ |   killed by a    | ..............
-........ |                  | ..............
-........ |       2018       | ..............
-....... *|     *  *  *      | *.............
-________)/\\\\_//(\\/(/\\)/\\//\\/|_)_______
+...............________...................
+............../        \\.................
+............./   REST   \\................
+............/     IN     \\...............
+.........../    PEACE     \\..............
+........../                \\.............
+.........|                  |.............
+.........|                  |.............
+.........|   killed by a    |.............
+.........|                  |.............
+.........|       2018       |.............
+........*|     *  *  *      |.*...........
+______)/\\\\_//(\\/(/\\)/\\//\\/|_)_______
+..........................................
+     Try Again? (Y) or Quit (Esc)?          
 "@

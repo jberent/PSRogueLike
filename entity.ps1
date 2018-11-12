@@ -48,7 +48,9 @@ function GetEntityValue($entity, $property, $default) {
         return $entity.$property
     }
 }
-
+function GetEntityLevel($entity) {
+    GetEntityValue $entity Level 1
+}
 
 function ExecuteEntityAction($target, $action) 
 {
@@ -72,6 +74,7 @@ function KillEntity($target) {
     $target.IsAlive = $false
     $target.IsDead = $true
     $target.Foreground = "Red"
+    DrawEntity $target
     ExecuteEntityAction $target $target.gen.KilledAction @args
     $target.Name = "$(EntityName $target) corpse"
 }

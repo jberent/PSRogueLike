@@ -2,7 +2,10 @@
 
 function GameSetup {
     ConsoleStart
-    GameRun
+    do {
+        GameRun
+        
+    } while ($game.Restart)
 }
 
 function GameRun {
@@ -12,6 +15,14 @@ function GameRun {
 }
 
 function GameStart {
+    if ($game.Restart) {
+        Write-Host "Restarting....."
+        $script:game = @{
+            ui = $host.ui.RawUI
+            playerName = $game.playerName
+        }
+        
+    }
     $game.entities = [System.Collections.ArrayList]@()
     $game.viewport = $game.ui.WindowSize
     
@@ -28,7 +39,11 @@ function ConsoleStart {
 }
 
 function GameOver {
-    ConsoleOver
+    if (!$game.Restart) {
+        ConsoleOver
+    } else {
+        # clear windows
+    }
 }
 function ConsoleOver {
     $host.ui.RawUI.CursorSize=$hostuiRawUICursorSize
@@ -58,7 +73,7 @@ function GameAddEntity($entity) {
 }
 
 function UpdateEntities($state) {
-    $game.entities | ? {$_.IsAlive} | % { MoveMonster $state $_}
+    $game.entities | ? {$_.IsAlive} | % { if(!$game.Quit) { MoveMonster $state $_}}
 }
 
 function GameLoop{
@@ -98,5 +113,6 @@ function GameLoop{
         }
 
         UpdateGame $state
+        if ($game.Quit) {return}
     }
 }
