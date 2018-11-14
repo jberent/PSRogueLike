@@ -4,7 +4,7 @@ $ErrorActionPreference =  'Stop' # no effect ?
 # -name is player name
 # -map  could be world, test file -- directory or ps file
 #   map.test(.ps1)
-#   max(\game.ps1) 
+#   max(\game.ps1) Max\test().ps1)
 #
 
 $game = @{
