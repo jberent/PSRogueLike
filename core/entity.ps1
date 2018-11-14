@@ -34,17 +34,31 @@ function AttackEntity($attacker, $defender) {
 function EntityName($entity) {
     GetEntityValueOrGen $entity "Name"
 }
+function GetGenValue($entity, $property) {
+    #if ($entity.Character -eq "@") {Read-Host "Property: $property"}
+    if ($entity.gen.$property) {
+        $entity.gen.$property
+    } elseif ($entity.gen.base.$property) {
+        $entity.gen.base.$property
+        #read-host $entity.gen.base.$property
+    }
+}
 function GetEntityValueOrGen($entity, $property) {
-    if ($entity.$property) {$entity.$property} else {$entity.gen.$property}
+    if ($entity.$property) {
+        $entity.$property
+    } else {
+        GetGenValue $entity $property
+    }
 }
 function GetEntityValue($entity, $property, $default) {
     if ($entity.$property) {
         return $entity.$property
-    } elseif ($entity.gen.$property) {
-        $entity.$property = $entity.gen.$property
-        return $entity.$property
-    } elseif ($default) {
-        $entity.$property = $default
+    } else {        
+        $value = GetGenValue $entity $property
+        if (!$value) {
+            $value = $default
+        }
+        $entity.$property = $value
         return $entity.$property
     }
 }
@@ -54,19 +68,21 @@ function GetEntityLevel($entity) {
 
 function ExecuteEntityAction($target, $action) 
 {
-    if ($action) {
-        & $action $target @args
+    $method = GetEntityValueOrGen $entity "$($action)Action"
+    if ($method) {
+        & $method $target @args
         # Log action, update entity?
     }
-    UpdateEntity $target
 }
 
 function ActivateEntity($target) {
-    ExecuteEntityAction $target $target.gen.ActivateAction @args
+    ExecuteEntityAction $target Activate @args
+    UpdateEntity $target
 }
 
 function BumpEntity($target) {
-    ExecuteEntityAction $target $target.gen.BumpAction @args
+    ExecuteEntityAction $target Bump @args
+    UpdateEntity $target
 }
 
 
@@ -75,6 +91,6 @@ function KillEntity($target) {
     $target.IsDead = $true
     $target.Foreground = "Red"
     DrawEntity $target
-    ExecuteEntityAction $target $target.gen.KilledAction @args
+    ExecuteEntityAction $target Killed @args
     $target.Name = "$(EntityName $target) corpse"
 }

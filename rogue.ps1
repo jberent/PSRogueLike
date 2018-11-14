@@ -13,23 +13,34 @@ $game = @{
 
 function Play-Game($name, $map, $seed){
 
-    . .\ansi.ps1
-    . .\host.ps1
-    . .\core.ps1
-    . .\command.ps1
-    . .\mapgen.ps1
-    . .\map.ps1
-    . .\game.ps1
-    . .\entity.ps1
-    . .\player.ps1
-    . .\combat.ps1
+    . core\ansi.ps1
+    . core\host.ps1
+    . core\core.ps1
+    . core\command.ps1
+#    . .\mapgen.ps1
+    . core\map.ps1
+    . core\game.ps1
+    . core\entity.ps1
+    . core\player.ps1
+    . core\combat.ps1
 
 
     (Get-Host).ui.rawui.WindowTitle = "PS RogueLike"
     
+    if (!$map) {
+        $map = "Rogue_3_6_4"
+    }
     if ($map) {
         if (Test-Path "$map.ps1") {
             . ".\$map.ps1"
+        } elseif (Test-Path $map) { # folder?
+            if (Test-Path "$map\game.ps1") {
+                . "$map\game.ps1"           
+            } else {
+                Read-Host "No map found"
+            }
+        } else {
+            Read-Host "No map found"
         }
     }
     if ($name) {
