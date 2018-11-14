@@ -132,9 +132,10 @@ function CreateMap {
     # $game.StatusWindow | Format-List
     # read-host
     # showLevelTest $game $dungeon1
+    CreateLevel 1
     # createMapFromLevel (@{level = $dungeon1a; mapGen = $mapGen; DrawLines = $true})
     #createMapFromLevel (@{level = $arena2; mapGen = $mapGen; DrawLines = $true})
-    createMapFromLevel (@{level = $dungeon1; mapGen = $mapGen; DrawLines = "_"})
+    #createMapFromLevel (@{level = $dungeon1; mapGen = $mapGen; DrawLines = "_"})
     #createMapFromLevel (@{level = $dungeon2; mapGen = $mapGen; dec = $true})
     # $game
     # $game.rogue

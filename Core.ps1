@@ -21,6 +21,7 @@ function PrintToWindow($windowName, $x, $y, $text) {
 function GetWindow($windowName) {
     $game.$windowName
 }
+function GetWindowValue($windowName, $property) {$game.$windowName.$property}
 
 function UpdateWindow($windowName, $buffer, $x, $y) {
     $window = GetWindow $windowName
@@ -30,6 +31,7 @@ function UpdateWindow($windowName, $buffer, $x, $y) {
         $dest = (PointFromWindow $window $x $y)
     }
     SetBufferContents $dest $buffer
+    #read-host $windowName $dest.x $dest.y $buffer.getlength(0) $buffer.getlength(1)
 }
 
 
@@ -78,8 +80,8 @@ function CreateWindows {
     ##########################
     $right = $game.viewport.width-1
     $bottom = $game.viewport.height-1
-    $mapWidth = 80
-    $mapHeight = 40
+    $mapWidth = 81
+    $mapHeight = 45
     if ($right -lt 100) {
         $mapWidth = $right - 20
     }

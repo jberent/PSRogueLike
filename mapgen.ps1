@@ -1,4 +1,14 @@
 $mapGen = @{
+    MaxRooms = 9
+    MaxThings = 9
+    MaxObj = 9
+    MaxPack = 23
+    MaxTraps = 10
+    NumThings = 7
+
+    Wall = "_"
+    Floor = "."
+
     litColors = @{
         " " = "Black"
         "." = "DarkGray"
