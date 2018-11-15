@@ -33,7 +33,11 @@ if (Test-Path "ps-start-$env:USERNAME.ps1") {
 #endregion
 
 function RebuildEnvironment {
-    setting vsts  https://dx-fx.visualstudio.com/DefaultCollection/Home/_git/PSRoguelike
+    setting SCRIPTS                        basic-project
+    setting GitHub                         https://github.com/jberent/PSRogueLike
+    # TODO
+    setting vsts                           https://dx-fx.visualstudio.com/DefaultCollection/Home/_git/PSRoguelike
+    
 
 }
 
