@@ -4,6 +4,7 @@
               ],
     "ws_version":  "3.0",
     "settings":  {
-                     "SCRIPTS":  "basic-project"
+                     "SCRIPTS":  "basic-project",
+                     "https://github.com/jberent/PSRogueLike.git":  "https://github.com/jberent/PSRogueLike"
                  }
 }
