@@ -78,7 +78,7 @@ $itemGen = @{
         Char = '$'
         IsGold = $true
         Gold = 10
-        ActivateAction = {$game.rogue.gold += $target.gen.gold; $target.IsDeleted = $true; Log "You found $($target.gen.gold) gold pieces!" }
+        ActivateAction = {$gold = (GetEntityValue $target "gold"); $game.rogue.gold += $gold; $target.IsDeleted = $true; Log "You found $gold gold pieces!" }
         #BumpAction = {& $target.gen.ActivateAction $target}
     }
 

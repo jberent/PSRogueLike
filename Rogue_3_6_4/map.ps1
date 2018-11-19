@@ -11,6 +11,7 @@ function CreateLevel($level) {
     $void = CreateCell " " $bg $bg
 
     $map = @{
+        level = $level
         rows = $rows
         cols = $cols
         grid = New-Object "object[,]" $rows,$cols
@@ -20,14 +21,14 @@ function CreateLevel($level) {
         floor = "."
         rooms = @()
     }
-    $map | Add-Member ScriptMethod CreateItem { Param ([string]$name, [char]$char, $x, $y)
+    $map | Add-Member ScriptMethod CreateItem { Param ([string]$name, $char, $x, $y)
         $gen = $this.mapgen.items.$name
         if (!$char) {
             [char]$char = $gen.Char
         }
         $entity = @{
             gen = $gen
-            Character = $char
+            Character = [char]$char
             Foreground = $gen.Color
             Background = $this.BackgroundColor
             X = $x
@@ -35,6 +36,19 @@ function CreateLevel($level) {
         }
         ExecuteEntityAction $entity "Created"
         return $entity
+    }
+    $map | Add-Member ScriptMethod PlaceEntity { Param ($point, $entity) 
+        # $entity | Format-List | Out-Host
+        # read-host "Gold? $($point.x) $($point.y) $($this.grid[$point.y,$point.x].Character)"
+        PlaceEntityXY $entity $point.x $point.y
+        if ($game.showDev -gt 2) {
+            DrawEntity $entity
+        }
+    }
+    $map | Add-Member ScriptMethod AddGold { Param ($point, $gold) 
+        $entity = $this.CreateItem("Gold")
+        $entity.gold = $gold
+        $this.PlaceEntity($point, $entity)
     }
     # $map | Add-Member ScriptMethod CreateCreature {Param([string]$name)
     #     $gen = $this.mapgen.Creatures.$name
@@ -46,18 +60,21 @@ function CreateLevel($level) {
     #     }   
     # }
     $game.map = $map
-    doRooms
-    doPassages
-    $room1 = $game.map.rooms[0]
+    doRooms $map
+    doPassages $map
+    $room1 = $map.rooms[0]
     $x = $room1.x
     $y = $room1.y
     if (!$game.rogue) {
         $entity = $map.CreateItem("Player")
         GameAddEntity $entity
     }
-    $game.map.grid[($y+1),($x+1)] | Format-List
+    #$game.map.grid[($y+1),($x+1)] | Format-List
     PlaceEntityXY $entity ($x + 1) ($y+1)
     DrawEntity $entity
+    
+    #TODO: LightPlayer
+    
     # $entity | Format-List
     # $game.map.buffer[$y,$x] | Format-List
     # read-host 
@@ -65,44 +82,61 @@ function CreateLevel($level) {
 
 
 }
-function doRooms{ RoomsGridStrategy }
+function doRooms($map){ RoomsGridStrategy $map }
 
 # layout rooms in a grid to remove concern of overlap
 # Nine Rooms
 # Rogue has 'Gone' and 'Dark' rooms
-function RoomsGridStrategy{
-    $rows = $game.map.rows
-    $cols = $game.map.cols
+function RoomsGridStrategy($map){
+    $rows = $map.rows
+    $cols = $map.cols
     # use a 9 grid
     [int]$boxw = $cols / 3 
     [int]$boxh = $rows / 3
     $x =0; $y= 0
+    $dirCount = 0
+    $dirx = 1
     for($i=0;$i -lt 9;$i++) {
-        RoomGridStrategy @{x = $x; y = $y; w=$boxw; h=$boxh; i =$i}
-        $x += $boxw; if ($x + $boxw -gt $cols) {$x=0;$y+=$boxh}
+        RoomGridStrategy $map @{x = $x; y = $y; w=$boxw; h=$boxh; i =$i}
+        $dirCount++;
+        if ($dirCount -eq 3) { # ox turn
+            $dirx=-$dirx
+            $y+=$boxh
+            $dirCount = 0
+        } else {
+            $x += ($dirx * $boxw); 
+        }
     } 
 }
 
-function RoomGridStrategy($box) {
+function RoomGridStrategy($map, $box) {
     #read-host $box.x $box.y $box.w $box.h
     do {
         $w = (Get-Random ($box.w - 4)) + 4
         $h = (Get-Random ($box.h - 4)) + 4
         $room = @{
+            map = $map
             w = $w
             h = $h
             x = $box.x + (Get-Random ($box.w - $w))
             y = $box.y + (Get-Random ($box.h - $h))
 
-        }    
+        }
     } until ($room.y -ne 0)
     $room.box = $box
+    
+    $room | Add-Member ScriptProperty RandomPosition { Point ($this.x + 1 + (Get-Random ($this.w-2))) ($this.y + 1 + (Get-Random ($this.h-2)))}
+    $room | Add-Member ScriptMethod AddGold {Param($gold) $point = $this.RandomPosition; $this.map.AddGold($point, $gold) }
     addRoom $room
-    addRoomWall "Passage" "$($box.i)" $room.x $room.y
+    $gold = & $room.map.mapGen.GOLDCALC $map.level
+    $room.AddGold($gold)
+    if ($game.showDev) {
+        addRoomWall "Passage" "$($box.i)" $room.x $room.y
+    }
 }
 function addRoom($room) {
     #read-host $room.x $room.y $room.w $room.h
-    $map = $game.map
+    $map = $room.map
     $map.rooms += $room
     $mapgen = $map.mapGen
     $dec = $mapgen.dec
@@ -129,7 +163,9 @@ function addRoomWall($key, [char]$char, $x, $y) {
     $entity = $map.CreateItem($key, $char, $x, $y)
     $map.grid[$y,$x] = $entity
 
-    $map.buffer[$entity.y,$entity.x] = CreateCell $entity.Character $entity.Foreground $entity.Background
+    if ($game.showDev -gt 2){
+        $map.buffer[$entity.y,$entity.x] = CreateCell $entity.Character $entity.Foreground $entity.Background
+    }
 
 }
 
@@ -137,26 +173,44 @@ function doPassages {
     PassageSimpleStrategy
 }
 # 0 1 2
-# 3 4 5
+# 5 4 3
 # 6 7 8
 $passageConnections = @(
-    @(1,3),
+    @(1,5),
     @(2,4,0),
-    @(5,1),
-    @(6,4,0),
-    @(3,5,7,1),
+    @(3,1),
     @(4,2,8),
-    @(7,3),
+    @(5,3,7,1),
+    @(6,4,0),
+    @(7,5),
     @(8,6,4),
-    @(5,7)
+    @(3,7)
 )
 function PassageSimpleStrategy {
     $map = $game.map
     for($i=0;$i -lt 8;$i++) {
-        $room = $map.rooms[$i]
-        $to = $passageConnections[$i][0]
-        connectRooms $room $map.rooms[$to] 
+        #$room = 
+        #$to = $passageConnections[$i][0]
+        connectRooms $map.rooms[$i] $map.rooms[$i+1] 
     }
+}
+function PassageRandomStrategy {
+    $map = $game.map
+    $edges = @{}
+    $nodes = (0..8) | % {
+        $id = $_
+        $conns = $passageConnections[$_]
+        @{
+            id = $id
+            conns = $conns
+            isConnected = $true
+        }  
+        $conns | % {$to = $_; $key = "$id$to"; $edges.$key = @{a = $id; b=$to}}
+    }
+    $root = $nodes[0]
+    (0..8) |  % { }
+    $leafs = ,$nodes[8]
+
 }
 
 function connectRooms($room1, $room2) {
@@ -207,7 +261,8 @@ function drawPassageY($x1, $y1, $x2, $y2, $my){
     for($y=$y1; $y -le $my; $y++) {
         addRoomWall "Passage" "#" $x1 $y
     }
-    if ($x1 -lt $x2 ) {$xL = $x1; $xT = $y2} else {$xL = $x2; $xT = $x1} 
+    
+    if ($x1 -lt $x2 ) {$xL = $x1; $xT = $x2} else {$xL = $x2; $xT = $x1} 
     for($x=$xL; $x -lt $xT; $x++) {
         addRoomWall "Passage" "#" $x $my
     }

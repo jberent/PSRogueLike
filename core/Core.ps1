@@ -162,14 +162,35 @@ function Status($msg) {
     #$state.ui.CursorPosition = $state.CursorPosition
 }
 
-# function DrawStats() {}
+function RollDice($dice) {
+    if ($dice) {
+        $parse = $dice.split("+")
+        if ($parse.count -eq 2) {
+            [int]$bonus = $parse[1] 
+        }
+        $parse2 = $parse[0].split("d")
+        [int]$rolls = 1
+        [int]$d = $parse2[0]
+        
+        $result = 0
+        if ($parse2.count -eq 2) {
+            [int]$rolls = $parse2[0]
+            [int]$d = $parse2[1]
+        } else { # no d, just an absolute value (?)
+            $result = $d
+            $rolls = 0
+        }
+        for($r=0; $r -lt $rolls; $r++) {
+            $result += ((Get-Random $d) + 1)
+        }
+        #read-host "$dice $rolls x $d = $($result + $bonus)"
+        return $result + $bonus
+    }
+}
+function d4 {(Get-Random 4) + 1 }
 
-# function DrawMap() {
-#     $map = $game.map
-#     for ($i = 0; $i -lt $map.GetLength(0); $i++) {
-#         for ($j = 0; $j -lt $map.GetLength(1); $j++) {
-#             CUP ($i+1) ($j+1) $map[$i,$j].Character
-#         }
-#     }
-# }
+function d10 {(Get-Random 10) + 1 }
+
+function d20 {(Get-Random 20) + 1 }
+function d100 {(Get-Random 100) + 1 }
 

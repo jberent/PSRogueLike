@@ -39,31 +39,6 @@ function CombatResults($attacker, $defender) {
     }
 
 }
-function RollDice($dice) {
-    if ($dice) {
-        $parse = $dice.split("+")
-        if ($parse.count -eq 2) {
-            [int]$bonus = $parse[1] 
-        }
-        $parse2 = $parse[0].split("d")
-        [int]$rolls = 1
-        [int]$d = $parse2[0]
-        
-        $result = 0
-        if ($parse2.count -eq 2) {
-            [int]$rolls = $parse2[0]
-            [int]$d = $parse2[1]
-        } else { # no d, just an absolute value (?)
-            $result = $d
-            $rolls = 0
-        }
-        for($r=0; $r -lt $rolls; $r++) {
-            $result += ((Get-Random $d) + 1)
-        }
-        #read-host "$dice $rolls x $d = $($result + $bonus)"
-        return $result + $bonus
-    }
-}
 function GetCombatHitPoints($entity) {
     if ($entity.IsAlive) {
         if (!$entity.HP) {
@@ -86,7 +61,6 @@ function GetCombatHit($attacker) {
     d20
 }
 
-function d20 {(Get-Random 20) + 1 }
 function GetCombatToHitBonus($attacker, $defender) {
     0
 }

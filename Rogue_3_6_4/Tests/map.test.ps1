@@ -5,6 +5,7 @@ function Test {
 
 if ($game) {
     . Rogue_3_6_4\map.ps1
+    $game.showDev = 3
 
 } else {
     . core\host.ps1
@@ -14,6 +15,8 @@ if ($game) {
     function GameAddEntity($entity) {}
 }
 function CreateMap {
+    # $game.mapWindow | Format-List | Out-Host
+    # read-host $game.viewport
     CreateLevel 1
 }
 
@@ -22,6 +25,7 @@ if (!$game) {
     $game = @{
         ui = $host.ui.RawUI
         MapWindow = RectLTRB 0 0 81 45
+        showDev = 3
     }
     
     Test
