@@ -1,5 +1,5 @@
 function PlayerInit {
-    $player = $game.rogue
+    $player = $game.player
     $player.Level = 1
     $player.XP = 0
     $player.HP = 12
@@ -17,7 +17,7 @@ function DrawPlayerStats {
 }
 
 function DrawPlayerHealthStats {
-    $rogue = $game.rogue
+    $rogue = $game.player
     $status = "Level:1 x:{0,-4} y:{1,-4} `${2,-5} {3,3}({4,3}) AC:{7,-2} {5,2}/{6,-5} " -f $rogue.x, $rogue.y, $rogue.Gold, $rogue.HP, $rogue.MAXHP, $rogue.Level, $rogue.XP, $rogue.ArmorClass
     Status $status # "x:$($rogue.x) y:$($rogue.y) `$$($rogue.Gold) $($rogue.HP)%"
 }
@@ -34,11 +34,11 @@ function MovePlayer($state, [System.Management.Automation.Host.Coordinates]$to) 
         # write-host "Move torwards $($entity.gen.name) at $($to.x) $($to.y)"
         if (IsLocationTraversable $to) {
             # write-host "Move to $($to.x) $($to.y)"
-            MoveEntity $game.rogue $to
-        } elseif ($entity.gen.IsMonster -and $entity.IsAlive) {
-            AttackEntity $game.rogue $entity
+            MoveEntity $game.player $to
+        } elseif ((GetEntityValue $entity IsMonster) -and $entity.IsAlive) {
+            AttackEntity $game.player $entity
         } else {
-            BumpEntity $entity $game.rogue
+            BumpEntity $entity $game.player
         }
     }
 }
@@ -47,16 +47,16 @@ function PlayerActivate($state, [System.Management.Automation.Host.Coordinates]$
     $entity = GetGridEntry $game.map $to
     if ($entity) {
         # Log $entity.gen.name
-        if ($entity.gen.IsMonster -and $entity.IsAlive) {
-            AttackEntity $game.rogue $entity
+        if ((GetEntityValue $entity IsMonster) -and $entity.IsAlive) {
+            AttackEntity $game.player $entity
         } else {
-            ActivateEntity $entity $game.rogue
+            ActivateEntity $entity $game.player
         }
     }
 }
 
 function GetRogueOrbit {
-    $rogue = $game.rogue
+    $rogue = $game.player
     $map = $game.map
     @{
         W = GetMapEntry $map $rogue.x ($rogue.y-1)

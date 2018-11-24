@@ -66,7 +66,7 @@ function UpdateGame($state) {
 
 function GameAddEntity($entity) {
     if ($entity.gen.Name -eq "rogue"){
-        $game.rogue = $entity
+        $game.player = $entity
     } else {
         $game.entities.Add($entity) > $null
     }

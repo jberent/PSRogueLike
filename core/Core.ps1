@@ -187,6 +187,9 @@ function RollDice($dice) {
         return $result + $bonus
     }
 }
+
+function Save100([int]$limit) {(Get-Random 100) + 1 -lt $limit} 
+function rnd($num) {(Get-Random $num) + 1 }
 function d4 {(Get-Random 4) + 1 }
 
 function d10 {(Get-Random 10) + 1 }

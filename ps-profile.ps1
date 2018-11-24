@@ -9,7 +9,7 @@ function Restart-Workspace([switch] $nohelp, [switch] $hard) {
         $env:SHOW_HELP = "NO"
     }
     if ($hard) {
-        $global:workspace.clearWokspace()
+        $global:workspace.clearWorkspace()
     }
     switch ($args[0]) {
 	    Default {}

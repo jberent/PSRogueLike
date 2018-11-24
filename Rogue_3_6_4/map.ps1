@@ -24,12 +24,12 @@ function CreateLevel($level) {
     $map | Add-Member ScriptMethod CreateItem { Param ([string]$name, $char, $x, $y)
         $gen = $this.mapgen.items.$name
         if (!$char) {
-            [char]$char = $gen.Char
+            [char]$char = GetGenBaseValue $gen Char
         }
         $entity = @{
             gen = $gen
             Character = [char]$char
-            Foreground = $gen.Color
+            Foreground = GetGenBaseValue $gen Color
             Background = $this.BackgroundColor
             X = $x
             Y = $y
@@ -65,7 +65,7 @@ function CreateLevel($level) {
     $room1 = $map.rooms[0]
     $x = $room1.x
     $y = $room1.y
-    if (!$game.rogue) {
+    if (!$game.player) {
         $entity = $map.CreateItem("Player")
         GameAddEntity $entity
     }
@@ -115,7 +115,6 @@ function RoomGridStrategy($map, $box) {
         $w = (Get-Random ($box.w - 4)) + 4
         $h = (Get-Random ($box.h - 4)) + 4
         $room = @{
-            map = $map
             w = $w
             h = $h
             x = $box.x + (Get-Random ($box.w - $w))
@@ -124,13 +123,64 @@ function RoomGridStrategy($map, $box) {
         }
     } until ($room.y -ne 0)
     $room.box = $box
+    $room.map = $map
+    $room.gen = $map.mapgen.Items.Room
+
+    $room | Add-Member ScriptMethod addRoomWall {Param($key, [char]$char, $x, $y) 
+        $map = $this.map
+        $entity = $map.CreateItem($key, $char, $x, $y)
+        $entity.room = $this
+        $map.grid[$y,$x] = $entity
     
+        if ($game.showDev -gt 2){
+            $map.buffer[$entity.y,$entity.x] = CreateCell $entity.Character $entity.Foreground $entity.Background
+        }
+    
+    }
+    $room | Add-Member ScriptMethod Light { 
+        if (!$this.lit){
+            $this.OuterContent | %{ DrawEntity $_ }
+            $this.lit = $true
+        } 
+    }
+    $room | Add-Member ScriptProperty OuterContent {
+        for ($y = $this.y; $y -lt $this.y + $this.h; $y++)  {
+         for ($x = $this.x; $x -lt $this.x + $this.w; $x++)  {
+            $this.map.grid[$y,$x]
+         }
+        }     
+    }
+    $room | Add-Member ScriptProperty Content {
+        for ($y = $this.y + 1 ; $y -lt $this.y + $this.h - 1; $y++)  {
+         for ($x = $this.x + 1 ; $x -lt $this.x + $this.w - 1; $x++)  {
+            $this.map.grid[$y,$x]
+         }
+        }     
+    }
+    $room | Add-Member ScriptProperty EmptyPosition { $this.Content | ? {$_.gen.IsEmpty} | Get-Random | % { Point $_.x $_.y } }
     $room | Add-Member ScriptProperty RandomPosition { Point ($this.x + 1 + (Get-Random ($this.w-2))) ($this.y + 1 + (Get-Random ($this.h-2)))}
-    $room | Add-Member ScriptMethod AddGold {Param($gold) $point = $this.RandomPosition; $this.map.AddGold($point, $gold) }
+    $room | Add-Member ScriptMethod AddGold {Param($gold) $this.HasGold = $gold; $point = $this.EmptyPosition; $this.map.AddGold($point, $gold) }
+    $room | Add-Member ScriptMethod IfGold {
+        $hasGold =  & $this.gen.ChanceGold
+        if ($hasGold){
+            $gold = & $this.gen.AmountGold ($this.map.level)
+            $this.AddGold($gold )
+        }
+    }
+    $room | Add-Member ScriptMethod IfMonster {
+        $hasMonster =  & $this.gen.ChanceMonster $this
+        if ($hasMonster){
+            $ch = & $monster.randmonster ($this.map.level) 
+            $monster = $this.map.CreateItem($ch)
+            $point = $this.EmptyPosition
+            $this.map.PlaceEntity($point, $monster)
+            #addRoomWall "Monster" $ch $point.x $point.y
+        }
+    }
     addRoom $room
-    $gold = & $room.map.mapGen.GOLDCALC $map.level
-    $room.AddGold($gold)
-    if ($game.showDev) {
+    $room.IfGold()
+    $room.IfMonster()
+    if ($game.showDev) { # show room number
         addRoomWall "Passage" "$($box.i)" $room.x $room.y
     }
 }
@@ -139,28 +189,39 @@ function addRoom($room) {
     $map = $room.map
     $map.rooms += $room
     $mapgen = $map.mapGen
-    $dec = $mapgen.dec
+    $WALLS = $room.gen.WALLS
     $wall = "wall"
     $floor = "floor"
-    addRoomWall $wall $dec.ul $room.x $room.y
-    addRoomWall $wall $dec.ur ($room.x + $room.w - 1) $room.y
-    addRoomWall $wall $dec.ll $room.x ($room.y + $room.h - 1)
-    addRoomWall $wall $dec.lr ($room.x + $room.w - 1) ($room.y + $room.h - 1)
+    $room.addRoomWall( $wall, $WALLS.ul, $room.x, $room.y)
+    $room.addRoomWall( $wall, $WALLS.ur, ($room.x + $room.w - 1), $room.y)
+    $room.addRoomWall( $wall, $WALLS.ll, $room.x, ($room.y + $room.h - 1))
+    $room.addRoomWall( $wall, $WALLS.lr, ($room.x + $room.w - 1), ($room.y + $room.h - 1))
     for ($x=1;$x -lt ($room.w - 1); $x++) {
-        addRoomWall $wall $dec.hw ($room.x + $x) $room.y
-        addRoomWall $wall $dec.hw ($room.x + $x) ($room.y + $room.h - 1)
+        $room.addRoomWall( $wall, $WALLS.hw, ($room.x + $x), $room.y)
+        $room.addRoomWall( $wall, $WALLS.hw, ($room.x + $x), ($room.y + $room.h - 1))
     }
     for ($y=1;$y -lt ($room.h - 1); $y++) {
-        addRoomWall $wall $dec.vw ($room.x) ($room.y + $y)
+        $room.addRoomWall( $wall, $WALLS.vw, ($room.x), ($room.y + $y))
         for ($x=1;$x -lt ($room.w - 1); $x++) {
-            addRoomWall $floor "." ($room.x + $x) ($room.y + $y)
+            $room.addRoomWall( $floor, ".", ($room.x + $x), ($room.y + $y))
         }
-        addRoomWall $wall $dec.vw ($room.x + $room.w - 1) ($room.y + $y)
+        $room.addRoomWall( $wall, $WALLS.vw, ($room.x + $room.w - 1), ($room.y + $y))
     }
 }
 function addRoomWall($key, [char]$char, $x, $y) {
     $map = $game.map
     $entity = $map.CreateItem($key, $char, $x, $y)
+    $map.grid[$y,$x] = $entity
+
+    if ($game.showDev -gt 2){
+        $map.buffer[$entity.y,$entity.x] = CreateCell $entity.Character $entity.Foreground $entity.Background
+    }
+
+}
+function addPassageTile($key, [char]$char, $x, $y, $dir) {
+    $map = $game.map
+    $entity = $map.CreateItem($key, $char, $x, $y)
+    $entity.dir = $dir
     $map.grid[$y,$x] = $entity
 
     if ($game.showDev -gt 2){
@@ -244,31 +305,60 @@ function connectRooms($room1, $room2) {
 function drawPassageX($x1, $y1, $x2, $y2, $mx){
     addRoomWall "Door" "+" ($x1-1) $y1
     for($x=$x1; $x -le $mx; $x++) {
-        addRoomWall "Passage" "#" $x $y1
+        addPassageTile "Passage" "#" $x $y1 "X"
     }
     if ($y1 -lt $y2 ) {$yL = $y1; $yT = $y2} else {$yL = $y2; $yT = $y1} 
     for($y=$yL; $y -lt $yT; $y++) {
-        addRoomWall "Passage" "#" $mx $y
+        addPassageTile "Passage" "#" $mx $y "Y"
     }
     addRoomWall "Door" "+" ($x2) $y2
     for($x=$mx; $x -lt $x2; $x++) {
-        addRoomWall "Passage" "#" $x $y2
+        addPassageTile "Passage" "#" $x $y2 "X"
     }
 
 }
 function drawPassageY($x1, $y1, $x2, $y2, $my){
     addRoomWall "Door" "+" $x1 ($y1 - 1)
     for($y=$y1; $y -le $my; $y++) {
-        addRoomWall "Passage" "#" $x1 $y
+        addPassageTile "Passage" "#" $x1 $y "Y"
     }
     
     if ($x1 -lt $x2 ) {$xL = $x1; $xT = $x2} else {$xL = $x2; $xT = $x1} 
     for($x=$xL; $x -lt $xT; $x++) {
-        addRoomWall "Passage" "#" $x $my
+        addPassageTile "Passage" "#" $x $my "X"
     }
     addRoomWall "Door" "+" $x2 $y2
     for($y=$my; $y -lt $y2; $y++) {
-        addRoomWall "Passage" "#" $x2 $y
+        addPassageTile "Passage" "#" $x2 $y "Y"
+    }
+
+}
+
+function UpdateLights {
+    $floor = $game.player.floor
+    if ($floor) {
+        if ($floor.room) {
+            if (!$floor.room.lit) {
+                $floor.room.light()
+            }
+        } else {
+            $orbit = GetRogueOrbit
+            UpdatePassageLights $orbit.w
+            UpdatePassageLights $orbit.s
+            UpdatePassageLights $orbit.a
+            UpdatePassageLights $orbit.d
+        }
+    }
+}
+function UpdatePassageLights($floor) {
+    if ($floor.floor) {
+        $floor = $floor.floor
+    }
+    if ($floor) {
+        if (!$floor.lit) {
+            DrawTile $floor.x $floor.y
+            $floor.lit = $true
+        }
     }
 
 }

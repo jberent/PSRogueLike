@@ -63,7 +63,7 @@ function UpdateBufferCell($buffer, $info) {
 function IsLocationTraversable([System.Management.Automation.Host.Coordinates]$to) {
     $entity = GetGridEntry $game.map $to
     if ($entity) {
-        !(($entity.gen.IsMonster -and $entity.IsAlive) -or $entity.gen.IsWall)
+        !(((GetEntityValue $entity IsMonster) -and $entity.IsAlive) -or (GetEntityValue $entity IsWall))
     }
 }
 
@@ -95,11 +95,19 @@ function UpdateEntity($entity) {
 }
 
 
+function DrawTile($x, $y) {
+    $entity = GetMapEntry $game.map $x $y
+    DrawEntity $entity
+}
 function DrawEntity($entity) { # TODO: dirty rectangle
-    UpdateBufferCell $game.map.buffer $entity
+    if ($entity) {
+        UpdateBufferCell $game.map.buffer $entity
+    }
 }
 
+function UpdateLights{}
 function DrawMap {
+    UpdateLights
     UpdateWindow "MapWindow" $game.map.buffer
 }
 

@@ -1,6 +1,6 @@
 
 function MoveMonster($state, $monster) {
-    $rogue = $game.rogue
+    $rogue = $game.player
     $dx = $rogue.x - $monster.x
     $dy = $rogue.y - $monster.y
     $dxa = $dx; $dxs = 1; if ($dxa -lt 0) {$dxa = -$dxa; $dxs = -1}
@@ -21,7 +21,7 @@ function MoveMonster($state, $monster) {
             $choice += $toY
         }
         if ($choice.count -gt 0) {
-            $to = $choice[(Get-Random $choice.count)]
+            $to = $choice | Get-Random
             MoveEntity $monster $to
         }
     }
@@ -34,12 +34,13 @@ function AttackEntity($attacker, $defender) {
 function EntityName($entity) {
     GetEntityValueOrGen $entity "Name"
 }
-function GetGenValue($entity, $property) {
+function GetGenValue($entity, $property) {GetGenBaseValue $entity.gen $property}
+function GetGenBaseValue($gen, $property) {
     #if ($entity.Character -eq "@") {Read-Host "Property: $property"}
-    if ($entity.gen.$property) {
-        $entity.gen.$property
-    } elseif ($entity.gen.base.$property) {
-        $entity.gen.base.$property
+    if ($gen.$property) {
+        $gen.$property
+    } elseif ($gen.base.$property) {
+        $gen.base.$property
         #read-host $entity.gen.base.$property
     }
 }

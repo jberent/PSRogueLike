@@ -11,7 +11,6 @@ $mapGen = @{
         NumThings = 7
 
         ROOM_LEFT_OUT = {d4} # rooms[rnd_room()] |= ISGONE
-        ROOM_ISDARK = {Param([int]$level) d10 -lt ($level-1)}
         # ISRING = {(h,r) (cur_ring[h] != NULL && cur_ring[h]->o_which == r)}
         # ISWEARING ={(r) (ISRING(LEFT, r) || ISRING(RIGHT, r))}
         # ISMULT = {(type) (type == POTION || type == SCROLL || type == FOOD)}
@@ -32,7 +31,6 @@ $mapGen = @{
         BOLT_LENGTH = 6
         
     }
-    GOLDCALC = {Param([int]$level)(Get-Random (50 + 10 * $level)) + 2}
     
     BackgroundColor = "Black"
     DEC = @{

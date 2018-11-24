@@ -21,15 +21,15 @@ function CommandA($state) { CommandWASD $state -1 0 }
 function CommandS($state) { CommandWASD $state 0 1 }
 function CommandD($state) { CommandWASD $state 1 0 }
 function CommandMovePlayer($state, $dx, $dy) {
-    if ($game.rogue.IsAlive) {
-        MovePlayer $state (Point ($game.rogue.x+$dx) ($game.rogue.y+$dy))
+    if ($game.player.IsAlive) {
+        MovePlayer $state (Point ($game.player.x+$dx) ($game.player.y+$dy))
     } else {
         Log "You cannot move, you are dead"
     }
 }
 function CommandWASD($state, $dx, $dy) {
-    if ($game.rogue.IsAlive) {
-        PlayerActivate $state (Point ($game.rogue.x+$dx) ($game.rogue.y+$dy))
+    if ($game.player.IsAlive) {
+        PlayerActivate $state (Point ($game.player.x+$dx) ($game.player.y+$dy))
     } else {
         Log "You are dead"
     }

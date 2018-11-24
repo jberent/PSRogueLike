@@ -105,7 +105,7 @@ $mapGen = @{
         Name = "gold"
         IsGold = $true
         Gold = 10
-        ActivateAction = {$game.rogue.gold += $target.gen.gold; $target.IsDeleted = $true; Log "You found $($target.gen.gold) gold pieces!" }
+        ActivateAction = {$game.player.gold += $target.gen.gold; $target.IsDeleted = $true; Log "You found $($target.gen.gold) gold pieces!" }
         #BumpAction = {& $target.gen.ActivateAction $target}
     }
     ')' = @{

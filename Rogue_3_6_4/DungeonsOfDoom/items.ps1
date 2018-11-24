@@ -32,6 +32,23 @@ $itemGen = @{
         Base = $Floor
     }
 
+
+    Room = @{ #not an entity, per se
+        ROOM_ISDARK = {Param([int]$level) d10 -lt ($level-1)}
+        WALLS = @{
+            "ul" = 9484 # upper left corner
+            "ur" = 9488
+            "ll" = 9492
+            "lr" = 9496
+            "hw" = 9472 # horizontal wall
+            "vw" = 9474 # vertical wall
+        }
+        ChanceGold = {Save100 50}
+        AmountGold = {Param([int]$level)(Get-Random (50 + 10 * $level)) + 2}
+        ChanceMonster = {Param($room) if ($room.HasGold){Save100 80} else {Save100 25} }
+
+    }
+
     Wall = $Wall
     Rock = @{
         Name = "rock"
@@ -76,9 +93,11 @@ $itemGen = @{
     Gold = @{
         Name = "gold"
         Char = '$'
-        IsGold = $true
-        Gold = 10
-        ActivateAction = {$gold = (GetEntityValue $target "gold"); $game.rogue.gold += $gold; $target.IsDeleted = $true; Log "You found $gold gold pieces!" }
+        Color = "Yellow"
+        # IsGold = $true
+        # Chance = {Save100 50}
+        # Amount = {Param([int]$level)(Get-Random (50 + 10 * $level)) + 2}
+        ActivateAction = {$gold = (GetEntityValue $target "gold"); $game.player.gold += $gold; $target.IsDeleted = $true; Log "You found $gold gold pieces!" }
         #BumpAction = {& $target.gen.ActivateAction $target}
     }
 
